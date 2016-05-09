@@ -45,12 +45,24 @@ public class MaterialIconView extends ImageView {
         this.context = context;
     }
 
+
+    /**
+     * This method returns a MaterialPropertyAnimator object, which can be used to animate
+     * specific properties on this View. Instead of {animate()}, you can call this method several
+     * times in order to compute different animation.
+     *
+     * @return MaterialPropertyAnimator A new MaterialPropertyAnimator associated with this View.
+     */
     public MaterialPropertyAnimator animateMaterial() {
         if (bitmap == null)
             throw new MaterialIconViewError("Bitmap null. Did you miss a call to setMaterialImageBitmap() ?");
         return new MaterialPropertyAnimator(this, false);
     }
 
+    /**
+     * Set a Bitmap Image to this view.
+     * @param bitmap Image to set
+     */
     public void setMaterialImageBitmap(Bitmap bitmap) {
         super.setImageBitmap(bitmap);
         this.bitmap = bitmap;
@@ -60,6 +72,9 @@ public class MaterialIconView extends ImageView {
         resetMaterialImageBitmap();
     }
 
+    /**
+     * Reset the canvas (and the bitmap) as it was when {setMaterialImageBitmap} was called.
+     */
     public void resetMaterialImageBitmap() {
         tempBitmap = Bitmap.createBitmap(width, height, bitmap.getConfig());
         tempBitmap.eraseColor(Color.parseColor("#00FFFFFF"));
@@ -76,10 +91,6 @@ public class MaterialIconView extends ImageView {
 
     public int getBitmapHeight() {
         return height;
-    }
-
-    public void cancelMaterialAnimation(MaterialPropertyAnimator animator) {
-        animator.cancel();
     }
 
     class MaterialIconViewError extends Error {

@@ -73,6 +73,15 @@ public class MainActivity extends AppCompatActivity {
         };
 
 
+        final View.OnClickListener onClickListener6 = new View.OnClickListener() {
+            @Override
+            public void onClick(final View v) {
+                final MaterialIconView view = (MaterialIconView) v;
+                launchNewAnimation6(view);
+            }
+        };
+
+
         final MaterialIconView icon1 = (MaterialIconView) findViewById(R.id.icon1);
         icon1.setMaterialImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_bluetooth_white_48dp));
         icon1.setOnClickListener(onClickListener1);
@@ -156,12 +165,29 @@ public class MainActivity extends AppCompatActivity {
         final MaterialIconView icon20 = (MaterialIconView) findViewById(R.id.icon20);
         icon20.setMaterialImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_wifi_white_48dp));
         icon20.setOnClickListener(onClickListener5);
+
+
+        final MaterialIconView icon21 = (MaterialIconView) findViewById(R.id.icon21);
+        icon21.setMaterialImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_bluetooth_white_48dp));
+        icon21.setOnClickListener(onClickListener6);
+
+        final MaterialIconView icon22 = (MaterialIconView) findViewById(R.id.icon22);
+        icon22.setMaterialImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_chrome_reader_mode_white_48dp));
+        icon22.setOnClickListener(onClickListener6);
+
+        final MaterialIconView icon23 = (MaterialIconView) findViewById(R.id.icon23);
+        icon23.setMaterialImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_android_white_48dp));
+        icon23.setOnClickListener(onClickListener6);
+
+        final MaterialIconView icon24 = (MaterialIconView) findViewById(R.id.icon24);
+        icon24.setMaterialImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_wifi_white_48dp));
+        icon24.setOnClickListener(onClickListener6);
     }
 
     private void launchNewAnimation1(final MaterialIconView view) {
         if (rnd.nextInt(5) == 0)
             view.animateMaterial()
-                    .duration(500 + rnd.nextInt(1000))
+                    .setDuration(500 + rnd.nextInt(1000))
                     .fromPoint(new Point(view.getBitmapWidth() / 2, view.getBitmapHeight() / 2))
                     .typeOfTransition(TypeOfTransition.Circle)
                     .directionOfTransition(getRandomDirectOfTransition())
@@ -177,7 +203,7 @@ public class MainActivity extends AppCompatActivity {
                     });
         else
             view.animateMaterial()
-                    .duration(500 + rnd.nextInt(1000))
+                    .setDuration(500 + rnd.nextInt(1000))
                     .typeOfTransition(getRandomTypeOfTransition())
                     .directionOfTransition(getRandomDirectOfTransition())
                     .toColor(getRandomMaterialColor())
@@ -197,9 +223,9 @@ public class MainActivity extends AppCompatActivity {
                 .typeOfTransition(getRandomTypeOfTransition())
                 .directionOfTransition(getRandomDirectOfTransition())
                 .toColor(getRandomMaterialColor())
-                .startingDelay(2000)
-                .duration(1000)
-                .withDependantAnimationView(new MaterialPropertyAnimator.ViewAnimation() {
+                .setStartDelay(2000)
+                .setDuration(1000)
+                .withDependentAnimationView(new MaterialPropertyAnimator.ViewAnimation() {
                     @Override
                     public void animate(ViewPropertyAnimator animator) {
                         animator.rotation(360).setInterpolator(new AccelerateDecelerateInterpolator()).setListener(new AnimatorListenerAdapter() {
@@ -223,9 +249,9 @@ public class MainActivity extends AppCompatActivity {
                 .typeOfTransition(getRandomTypeOfTransition())
                 .directionOfTransition(getRandomDirectOfTransition())
                 .toColor(getRandomMaterialColor())
-                .startingDelay(2000)
-                .duration(1000)
-                .withIndependantAnimationView(new MaterialPropertyAnimator.ViewAnimation() {
+                .setStartDelay(2000)
+                .setDuration(1000)
+                .withIndependentAnimationView(new MaterialPropertyAnimator.ViewAnimation() {
                     @Override
                     public void animate(ViewPropertyAnimator animator) {
                         animator.rotation(360).setInterpolator(new AccelerateDecelerateInterpolator()).setListener(new AnimatorListenerAdapter() {
@@ -295,6 +321,25 @@ public class MainActivity extends AppCompatActivity {
                 .setInterpolator(new AccelerateDecelerateInterpolator())
                 .endingArea(0.4f);
     }
+
+    private void launchNewAnimation6(final MaterialIconView view) {
+        view.animateMaterial()
+                .setDuration(500 + rnd.nextInt(1000))
+                .fromPoint(getRandomOrigin(view))
+                .typeOfTransition(TypeOfTransition.Circle)
+                .directionOfTransition(getRandomDirectOfTransition())
+                .setInterpolator(new AccelerateDecelerateInterpolator())
+                .toColor(getRandomMaterialColor())
+                .endingArea(rnd.nextFloat())
+                .setListener(new MaterialAnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(ValueAnimator animation) {
+                        super.onAnimationEnd(animation);
+                        launchNewAnimation6(view);
+                    }
+                });
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -384,5 +429,9 @@ public class MainActivity extends AppCompatActivity {
                 break;
         }
         return MaterialColor.getMaterialColorByIndice(color, 500);
+    }
+
+    private Point getRandomOrigin(MaterialIconView view) {
+        return new Point(rnd.nextInt(view.getBitmapWidth()), rnd.nextInt(view.getBitmapHeight()));
     }
 }

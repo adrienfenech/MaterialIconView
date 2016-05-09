@@ -11,15 +11,14 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Handler;
-import android.util.Log;
 import android.util.Pair;
+import android.view.View;
 import android.view.ViewPropertyAnimator;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.FutureTask;
 
 /**
  * Created by Adrien Fenech on 28/04/16.
@@ -65,8 +64,6 @@ public class MaterialPropertyAnimator {
 
     final Map<Integer, Object> animationValues;
 
-    FutureTask animationTaskFutur = null;
-
     private Runnable animationRunnable = new Runnable() {
         @Override
         public void run() {
@@ -77,7 +74,6 @@ public class MaterialPropertyAnimator {
     private Runnable animationStarter = new Runnable() {
         @Override
         public void run() {
-            //animationTaskFutur = new FutureTask(animationRunnable, null);
             if (startingDelayHasBeenSet) {
                 new Handler().postDelayed(animationRunnable, (Long) animationValues.get(STARTING_DELAY));
             } else {
@@ -86,6 +82,13 @@ public class MaterialPropertyAnimator {
         }
     };
 
+    /**
+     * Animation Constructor. The constructor is in package visibility in order to be created
+     * with {@link MaterialIconView#animateMaterial()}.
+     * @param materialIconView The {@link MaterialIconView} associated
+     * @param requestFire Boolean use with {#newPostAnimation()} method.
+     * When @param requestFire is set to true, the animation need a call to {#fire()} to be executed
+     */
     MaterialPropertyAnimator(MaterialIconView materialIconView, boolean requestFire) {
         this.materialIconView = materialIconView;
         this.requestFire = requestFire;
@@ -111,6 +114,12 @@ public class MaterialPropertyAnimator {
         animationValues.put(INTERPOLATOR, new LinearInterpolator());
     }
 
+    /**
+     * This method will cause the canvas to be paint with a specific color when the
+     * animation is started.
+     * @param color Color to use
+     * @return This object, allowing calls to methods in this class to be chained.
+     */
     MaterialPropertyAnimator fromColor(final int color) {
         animationValues.put(FROM_COLOR, color);
         fromColorHasBeenSet = true;
@@ -119,6 +128,11 @@ public class MaterialPropertyAnimator {
         return this;
     }
 
+    /**
+     * This method will cause the canvas to be paint with a specific color according to animation.
+     * @param color Color to use
+     * @return This object, allowing calls to methods in this class to be chained.
+     */
     MaterialPropertyAnimator toColor(final int color) {
         animationValues.put(TO_COLOR, color);
         toColorHasBeenSet = true;
@@ -127,6 +141,12 @@ public class MaterialPropertyAnimator {
         return this;
     }
 
+    /**
+     * This method lets you add listener to the animation to be notified when
+     * the animation is starting, updating and ending.
+     * @param materialAnimatorListenerAdapter The listener
+     * @return This object, allowing calls to methods in this class to be chained.
+     */
     MaterialPropertyAnimator setListener(MaterialAnimatorListenerAdapter materialAnimatorListenerAdapter) {
         animationValues.put(ANIMATOR_LISTENER, materialAnimatorListenerAdapter);
         animatorListenerHasBeenSet = true;
@@ -135,6 +155,12 @@ public class MaterialPropertyAnimator {
         return this;
     }
 
+    /**
+     * This method is a syntactic sugar to add an animation when the this one will finish.
+     * It'is equivalent to call a new {@link MaterialIconView#animateMaterial()} in {@link MaterialAnimatorListenerAdapter#onAnimationEnd(ValueAnimator)}.
+     * This method will return a new MaterialPropertyAnimator which will be called at the end of this one (One frame later)
+     * @return A new MaterialPropertyAnimator, allowing calls to methods in this class to be chained.
+     */
     MaterialPropertyAnimator newPostAnimation() {
         MaterialPropertyAnimator postAnimation = new MaterialPropertyAnimator(materialIconView, true);
         animationValues.put(POST_ANIMATION, postAnimation);
@@ -144,7 +170,19 @@ public class MaterialPropertyAnimator {
         return postAnimation;
     }
 
+    /**
+     * Sets the interpolator for the underlying animator that animates the requested properties.
+     * By default, the animator uses the {@link AccelerateDecelerateInterpolator}. Calling this method
+     * will cause the declared object to be used instead.
+     *
+     * @param interpolator The TimeInterpolator to be used for ensuing property animations. A value
+     * of <code>null</code> will result in accelerate decelerate interpolation.
+     * @return This object, allowing calls to methods in this class to be chained.
+     */
     MaterialPropertyAnimator setInterpolator(TimeInterpolator interpolator) {
+        if (interpolator == null)
+            return this;
+
         animationValues.put(INTERPOLATOR, interpolator);
         interpolatorHasBeenSet = true;
         computeAnimationRunnable();
@@ -152,6 +190,11 @@ public class MaterialPropertyAnimator {
         return this;
     }
 
+    /**
+     * Let you specify the transition type of this animation. By default, Circle is used.
+     * @param typeOfTransition Type to use
+     * @return This object, allowing calls to methods in this class to be chained.
+     */
     MaterialPropertyAnimator typeOfTransition(TypeOfTransition typeOfTransition) {
         animationValues.put(TYPE_OF_TRANSITION, typeOfTransition);
         typeOfTransitionHasBeenSet = true;
@@ -160,6 +203,11 @@ public class MaterialPropertyAnimator {
         return this;
     }
 
+    /**
+     * Let you specify the direction of this animation. By default, DownToUp is used.
+     * @param directionOfTransition Type to use
+     * @return This object, allowing calls to methods in this class to be chained.
+     */
     MaterialPropertyAnimator directionOfTransition(DirectionOfTransition directionOfTransition) {
         animationValues.put(DIRECTION_OF_TRANSITION, directionOfTransition);
         directionOfTransitionHasBeenSet = true;
@@ -168,6 +216,11 @@ public class MaterialPropertyAnimator {
         return this;
     }
 
+    /**
+     * Let you specify from which point as to begin the animation. Used only with Circle type.
+     * @param point The origin of the transition
+     * @return This object, allowing calls to methods in this class to be chained.
+     */
     MaterialPropertyAnimator fromPoint(Point point) {
         animationValues.put(FROM_POINT, point);
         fromPointHasBeenSet = true;
@@ -176,6 +229,9 @@ public class MaterialPropertyAnimator {
         return this;
     }
 
+    /**
+     * @hide
+     */
     MaterialPropertyAnimator toPoint(Point point) {
         animationValues.put(TO_POINT, point);
         toPointHasBeenSet = true;
@@ -184,6 +240,11 @@ public class MaterialPropertyAnimator {
         return this;
     }
 
+    /**
+     * Let you specify a starting area for your animation. The value has to be in range 0 - 1.
+     * @param area The value to be used
+     * @return This object, allowing calls to methods in this class to be chained.
+     */
     MaterialPropertyAnimator startingArea(final float area) {
         animationValues.put(STARTING_AREA, area);
         startingAreaHasBeenSet = true;
@@ -192,6 +253,11 @@ public class MaterialPropertyAnimator {
         return this;
     }
 
+    /**
+     * Let you specify an ending area for your animation. The value has to be in range 0 - 1.
+     * @param area The value to be used
+     * @return This object, allowing calls to methods in this class to be chained.
+     */
     MaterialPropertyAnimator endingArea(final float area) {
         animationValues.put(ENDING_AREA, area);
         endingAreaHasBeenSet = true;
@@ -200,7 +266,15 @@ public class MaterialPropertyAnimator {
         return this;
     }
 
-    MaterialPropertyAnimator duration(final long duration) {
+    /**
+     * Sets the duration for the underlying animator that animates the requested properties.
+     * By default, the animator uses the default value for ValueAnimator. Calling this method
+     * will cause the declared value to be used instead.
+     * @param duration The length of ensuing property animations, in milliseconds. The value
+     * cannot be negative.
+     * @return This object, allowing calls to methods in this class to be chained.
+     */
+    MaterialPropertyAnimator setDuration(final long duration) {
         animationValues.put(DURATION, duration);
         durationHasBeenSet = true;
         computeAnimationRunnable();
@@ -208,15 +282,35 @@ public class MaterialPropertyAnimator {
         return this;
     }
 
-    MaterialPropertyAnimator startingDelay(final long delay) {
-        animationValues.put(STARTING_DELAY, delay);
+    /**
+     * Sets the startDelay for the underlying animator that animates the requested properties.
+     * By default, the animator uses the default value for ValueAnimator. Calling this method
+     * will cause the declared value to be used instead.
+     * @param startDelay The delay of ensuing property animations, in milliseconds. The value
+     * cannot be negative.
+     * @return This object, allowing calls to methods in this class to be chained.
+     */
+    MaterialPropertyAnimator setStartDelay(final long startDelay) {
+        animationValues.put(STARTING_DELAY, startDelay);
         startingDelayHasBeenSet = true;
         computeAnimationRunnable();
 
         return this;
     }
 
-    MaterialPropertyAnimator withDependantAnimationView(ViewAnimation viewAnimation) {
+    /**
+     * This method let you add a dependent animation to the view. When implementing
+     * ViewAnimation, you will access a ViewPropertyAnimator object. You can use this object as
+     * the one provided by {@link View#animate()} method in order to add original animation
+     * such as Rotation, Scale, ... with this animation.
+     *
+     * This animation is DEPENDENT, which means this animation will start with the same delay,
+     * and use the duration of currently material animation.
+     *
+     * @param viewAnimation The animation
+     * @return This object, allowing calls to methods in this class to be chained.
+     */
+    MaterialPropertyAnimator withDependentAnimationView(ViewAnimation viewAnimation) {
         final long startingDelay = startingDelayHasBeenSet ? (long) animationValues.get(STARTING_DELAY) : 0;
 
         if (durationHasBeenSet)
@@ -228,18 +322,36 @@ public class MaterialPropertyAnimator {
         return this;
     }
 
-    MaterialPropertyAnimator withIndependantAnimationView(ViewAnimation viewAnimation) {
+    /**
+     * This method let you add an independent animation to the view. When implementing
+     * ViewAnimation, you will access a ViewPropertyAnimator object. You can use this object as
+     * the one provided by {@link View#animate()} method in order to add original animation
+     * such as Rotation, Scale, ... with this animation.
+     *
+     * This animation is INDEPENDENT, which means this animation will NOT start with the same delay,
+     * and NOT use the duration of currently material animation.
+     *
+     * @param viewAnimation The animation
+     * @return This object, allowing calls to methods in this class to be chained.
+     */
+    MaterialPropertyAnimator withIndependentAnimationView(ViewAnimation viewAnimation) {
         viewAnimation.animate(materialIconView.animate());
         computeAnimationRunnable();
 
         return this;
     }
 
+    /**
+     * Use to start animation
+     */
     private void fire() {
         materialIconView.removeCallbacks(animationStarter);
         materialIconView.postOnAnimation(animationStarter);
     }
 
+    /**
+     * create the animation
+     */
     private void computeAnimationRunnable() {
         animationRunnable = new Runnable() {
             @Override
@@ -326,6 +438,12 @@ public class MaterialPropertyAnimator {
         }
     }
 
+    /**
+     * Create the area of current animation which has to be paint.
+     * @param animator The animation
+     * @return A Pair which contains the origin point of the rectangle and the rectangle
+     * representing the area covered.
+     */
     private Pair<Point, RectF> computeRectAnimation(ValueAnimator animator) {
         float rectX1 = 0;
         float rectY1 = 0;
@@ -388,6 +506,12 @@ public class MaterialPropertyAnimator {
         return new Pair<>(new Point(), new RectF(0, 0, 0, 0));
     }
 
+    /**
+     * Use to draw the circle
+     * @param origin The origin
+     * @param areaToCover The area to cover
+     * @param paint The paint object used
+     */
     private void drawCircle(Point origin, RectF areaToCover, Paint paint) {
         if (fromPointHasBeenSet)
             origin = (Point) animationValues.get(FROM_POINT);
@@ -411,11 +535,21 @@ public class MaterialPropertyAnimator {
         materialIconView.setImageDrawable(new BitmapDrawable(materialIconView.context.getResources(), materialIconView.tempBitmap));
     }
 
+    /**
+     * Use to draw the rectangle
+     * @param areaToCover The are to cover
+     * @param paint The paint object used
+     */
     private void drawRect(RectF areaToCover, Paint paint) {
         materialIconView.canvas.drawRect(areaToCover, paint);
         materialIconView.setImageDrawable(new BitmapDrawable(materialIconView.context.getResources(), materialIconView.tempBitmap));
     }
 
+    /**
+     * Use to draw the line
+     * @param areaToCover The are to cover
+     * @param paint The paint object used
+     */
     private void drawLine(RectF areaToCover, Paint paint) {
         float x1 = 0;
         float y1 = 0;
@@ -471,13 +605,6 @@ public class MaterialPropertyAnimator {
             materialIconView.canvas.drawLine(x1, y1, x2, y2, paint);
         }
         materialIconView.setImageDrawable(new BitmapDrawable(materialIconView.context.getResources(), materialIconView.tempBitmap));
-    }
-
-    void cancel() {
-        Log.d(TAG, "cancel: animation");
-        if (animationTaskFutur == null)
-            return;
-        animationTaskFutur.cancel(true);
     }
 
     public interface ViewAnimation {

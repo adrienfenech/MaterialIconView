@@ -7,12 +7,27 @@ import android.animation.ValueAnimator;
  */
 public abstract class MaterialAnimatorListenerAdapter {
 
-    public void onAnimationEnd(ValueAnimator animation) {
-    }
-
+    /**
+     * <p>Notifies the start of the animation.</p>
+     *
+     * @param animation The started animation.
+     */
     public void onAnimationStart(ValueAnimator animation) {
     }
 
+    /**
+     * <p>Notifies the end of the animation.</p>
+     *
+     * @param animation The animation which reached its end.
+     */
+    public void onAnimationEnd(ValueAnimator animation) {
+    }
+
+    /**
+     * <p>Notifies the occurrence of another frame of the animation.</p>
+     *
+     * @param animation The animation which was repeated.
+     */
     public void onAnimationUpdate(ValueAnimator animation) {
     }
 }

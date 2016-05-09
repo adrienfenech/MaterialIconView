@@ -1,7 +1,6 @@
 package com.adrienfenech.materialiconview;
 
 import android.graphics.Color;
-import android.util.Pair;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,30 +32,22 @@ public class MaterialColor {
     public static final int Black =         Color.parseColor("#000000");
     public static final int White =         Color.parseColor("#FFFFFF");
 
-    public static Pair<Integer, Integer> primaryColor;
-    public static Pair<Integer, Integer> secondaryColor;
-    public static Pair<Integer, Integer> accentColor;
 
-    public static int getPrimaryColor() {
-        return getMaterialColorByIndice(primaryColor.first, primaryColor.second);
-    }
-
-    public static int getSecondaryColor() {
-        return getMaterialColorByIndice(secondaryColor.first, secondaryColor.second);
-    }
-
-    public static int getAccentColor() {
-        return getMaterialColorByIndice(accentColor.first, accentColor.second);
-    }
-
-    public static ArrayList<Integer> getMaterialColorSet(int baseColorHex, int colorCount) {
+    /**
+     * Get a set of Material color using a specific color as base, from {@link MaterialColor}
+     * static field. You can specify the variations number of color as second parameter.
+     * @param baseColor The base color
+     * @param colorCount Number of variation
+     * @return The color set
+     */
+    public static ArrayList<Integer> getMaterialColorSet(int baseColor, int colorCount) {
         ArrayList<Integer> resultList = new ArrayList<Integer>();
-        float [] baseColorHSL = colorToHsl(baseColorHex);
+        float [] baseColorHSL = colorToHsl(baseColor);
 
         float lght = 0.25f;// initial lightness value (experimental)
         float lStep = (0.85f - lght) / colorCount; // step to go up to 0.6 lightness (experimental)
         for (int i = 0; i < colorCount; i++) {
-            int baseColor = hslToColor(255 ,baseColorHSL[0] , baseColorHSL[1] , lght);
+            baseColor = hslToColor(255 ,baseColorHSL[0] , baseColorHSL[1] , lght);
             resultList.add(baseColor);
             lght += lStep;
         }
@@ -66,16 +57,24 @@ public class MaterialColor {
         return resultList;
     }
 
-    public static int getMaterialColorByIndice(int baseColor, int indice) {
+    /**
+     * Get a specific color by index. This method use {getMaterialColorSet} with 9 as
+     * variation number. The indice must be in range 0 - 9, or use index
+     * from Material Design Color from Google GuideLines.
+     * @param baseColor The base color
+     * @param index The index used
+     * @return The specific color
+     */
+    public static int getMaterialColorByIndice(int baseColor, int index) {
         ArrayList<Integer> colors = getMaterialColorSet(baseColor, 9);
-        if (indice >= 50) {
-            if (indice == 50)
-                indice = 0;
+        if (index >= 50) {
+            if (index == 50)
+                index = 0;
             else
-                indice /= 100;
+                index /= 100;
         }
 
-        return colors.get(indice);
+        return colors.get(index);
     }
 
     private static float[]  colorToHsl(int hexColor) {
