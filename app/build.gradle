@@ -1,5 +1,29 @@
 apply plugin: 'com.android.application'
 
+ext {
+    bintrayRepo = 'maven'
+    bintrayName = 'material-icon-view'
+
+    publishedGroupId = 'com.adrienfenech.materialiconview'
+    libraryName = 'material-icon-view'
+    artifact = 'material-icon-view'
+
+    libraryDescription = 'A wrapper for Facebook Native Like Button (LikeView) on Android'
+
+    siteUrl = 'https://github.com/adrienfenech/MaterialIconView'
+    gitUrl = 'https://github.com/adrienfenech/MaterialIconView.git'
+
+    libraryVersion = '0.1.0'
+
+    developerId = 'adrienfenech'
+    developerName = 'Adrien Fenech'
+    developerEmail = 'adrienfenech@gmail.com'
+
+    licenseName = 'The Apache Software License, Version 2.0'
+    licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+    allLicenses = ["Apache-2.0"]
+}
+
 android {
     compileSdkVersion 23
     buildToolsVersion "23.0.2"
@@ -25,3 +49,6 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.3.0'
     compile 'com.android.support:design:23.3.0'
 }
+
+apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/installv1.gradle'
+apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/bintrayv1.gradle'
