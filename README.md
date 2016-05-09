@@ -1,6 +1,6 @@
 # MaterialIconView
 
-A library created to animate canvas of material design icon. As for a any `View` with `animate()`method, you can use here `a,imateMaterial()` of `MaterialIconView`.
+A library created to animate canvas of material design icon. As for any `View` with `animate()` method, you can use  `animateMaterial()` of `MaterialIconView`.
 This library provide also a `MaterialColor` class which can be used to create dynamically Material Color, and use it.
 ## How to include it ?
 
@@ -12,7 +12,7 @@ compile 'com.adrienfenech:material-icon-view:0.1.0'
 
 ## How to use it ?
 
-Firtly, you need to add an image to the `MaterialIconView`. You can use `src` parameter in xml, or `setMaterialImageBitmap` programmatically.
+Firstly, you need to add an image to the `MaterialIconView`. You can use `src` parameter in xml, or `setMaterialImageBitmap` programmatically.
 
 To animate it, you only need to call `mMaterialIconView.animateMaterial()` as `mView.animate()` in basic view.
 
@@ -27,9 +27,9 @@ Example 2:
 ```Java
 mMaterialIconView.animateMaterial()
         .setDuration(1500) // Set animation's duration to 1500ms
+        .toColor(MaterialColor.Green); // Apply a transition from current color to Green
         .typeOfTransition(TypeOfTransition.Circle) // Set transition's type to a Circle
         .setInterpolator(new AccelerateDecelerateInterpolator()) // Use AccelerateDecelerate interpolator
-        .toColor(MaterialColor.Green); // Apply a transition from current color to Green
 ```
 
 Example 3:
@@ -44,12 +44,25 @@ mMaterialIconView.animateMaterial()
 
 ## Advanced features
 
-As basic `ViewPropertyAnimator`, you can add listener to material animation, with callback to start, update and end of the animation.
-With MaterialIconView, you can chain or supperpose animation. Instead of use start or end callback to perform several animation, you can use 2 specifics methods:
+As basic `ViewPropertyAnimator`, you can add several listeners to material animation, with callback to start, update and end of the animation.
+With MaterialIconView, you can chain or supperpose animation. Instead of use start or end callback to perform several animations, you can use 2 specifics methods:
 
 ```Java
-withConcurrentAnimation() // Will return a new MaterialPropertyAnimator which can be customized and will be executed when the current annimation will start.
-withPostAnimation() // Will return a new MaterialPropertyAnimator which can be customized and will be executed when the current annimation will finish.
+/**
+     * This method is a syntactic sugar to add an animation when the this one will start.
+     * It'is equivalent to call a new {@link MaterialIconView#animateMaterial()} in {@link MaterialAnimatorListenerAdapter#onAnimationStart(ValueAnimator)}.
+     * This method will return a new MaterialPropertyAnimator which will be called at the beginning of this one (One frame later)
+     * @return A new MaterialPropertyAnimator, allowing calls to methods in this class to be chained.
+     */
+    MaterialPropertyAnimator withConcurrentAnimation()
+    
+/**
+     * This method is a syntactic sugar to add an animation when the this one will finish.
+     * It'is equivalent to call a new {@link MaterialIconView#animateMaterial()} in {@link MaterialAnimatorListenerAdapter#onAnimationEnd(ValueAnimator)}.
+     * This method will return a new MaterialPropertyAnimator which will be called at the end of this one (One frame later)
+     * @return A new MaterialPropertyAnimator, allowing calls to methods in this class to be chained.
+     */
+    MaterialPropertyAnimator withPostAnimation()
 ```
 
 The two next method will perform the same animation.
