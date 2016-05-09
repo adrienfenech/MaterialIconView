@@ -24,7 +24,7 @@ import java.util.Map;
  * Created by Adrien Fenech on 28/04/16.
  */
 public class MaterialPropertyAnimator {
-    static final long DURATION_VALUE = 500; // 500ms
+    public static final long DEFAULT_ANIMATION_DURATION = 500; // 500ms
     private static final String TAG = "MaterialPtyAnimator";
     private final MaterialIconView materialIconView;
     private final boolean requestFire;
@@ -46,6 +46,7 @@ public class MaterialPropertyAnimator {
     static final int DIRECTION_OF_TRANSITION =          0x0041;
     static final int ANIMATOR_LISTENER =                0x0050;
     static final int POST_ANIMATION =                   0x0051;
+    static final int CONCURRENT_ANIMATION =             0x0052;
     static final int INTERPOLATOR =                     0x0060;
 
     private boolean fromColorHasBeenSet =               false;
@@ -61,6 +62,7 @@ public class MaterialPropertyAnimator {
     private boolean animatorListenerHasBeenSet =        false;
     private boolean interpolatorHasBeenSet =            false;
     private boolean postAnimationHasBeenSet =           false;
+    private boolean concurrentAnimationHasBeenSet =     false;
 
     final Map<Integer, Object> animationValues;
 
@@ -107,8 +109,9 @@ public class MaterialPropertyAnimator {
         animatorListenerHasBeenSet = false;
         interpolatorHasBeenSet = true;
         postAnimationHasBeenSet = false;
+        concurrentAnimationHasBeenSet = false;
 
-        animationValues.put(DURATION, DURATION_VALUE);
+        animationValues.put(DURATION, DEFAULT_ANIMATION_DURATION);
         animationValues.put(TYPE_OF_TRANSITION, TypeOfTransition.Circle);
         animationValues.put(DIRECTION_OF_TRANSITION, DirectionOfTransition.DownToUp);
         animationValues.put(INTERPOLATOR, new LinearInterpolator());
@@ -161,13 +164,28 @@ public class MaterialPropertyAnimator {
      * This method will return a new MaterialPropertyAnimator which will be called at the end of this one (One frame later)
      * @return A new MaterialPropertyAnimator, allowing calls to methods in this class to be chained.
      */
-    MaterialPropertyAnimator newPostAnimation() {
+    MaterialPropertyAnimator withPostAnimation() {
         MaterialPropertyAnimator postAnimation = new MaterialPropertyAnimator(materialIconView, true);
         animationValues.put(POST_ANIMATION, postAnimation);
         postAnimationHasBeenSet = true;
         computeAnimationRunnable();
 
         return postAnimation;
+    }
+
+    /**
+     * This method is a syntactic sugar to add an animation when the this one will start.
+     * It'is equivalent to call a new {@link MaterialIconView#animateMaterial()} in {@link MaterialAnimatorListenerAdapter#onAnimationStart(ValueAnimator)}.
+     * This method will return a new MaterialPropertyAnimator which will be called at the beginning of this one (One frame later)
+     * @return A new MaterialPropertyAnimator, allowing calls to methods in this class to be chained.
+     */
+    MaterialPropertyAnimator withConcurrentAnimation() {
+        MaterialPropertyAnimator concurrentAnimation = new MaterialPropertyAnimator(materialIconView, true);
+        animationValues.put(CONCURRENT_ANIMATION, concurrentAnimation);
+        concurrentAnimationHasBeenSet = true;
+        computeAnimationRunnable();
+
+        return concurrentAnimation;
     }
 
     /**
@@ -230,7 +248,7 @@ public class MaterialPropertyAnimator {
     }
 
     /**
-     * @hide
+     * TODO
      */
     MaterialPropertyAnimator toPoint(Point point) {
         animationValues.put(TO_POINT, point);
@@ -416,6 +434,16 @@ public class MaterialPropertyAnimator {
                     });
                 }
 
+                if (concurrentAnimationHasBeenSet) {
+                    anim.addListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationStart(Animator animation) {
+                            super.onAnimationStart(animation);
+                            ((MaterialPropertyAnimator)animationValues.get(CONCURRENT_ANIMATION)).fire();
+                        }
+                    });
+                }
+
                 if (postAnimationHasBeenSet) {
                     anim.addListener(new AnimatorListenerAdapter() {
                         @Override
@@ -525,7 +553,12 @@ public class MaterialPropertyAnimator {
             case RightToLeft:
             case DownToUp:
             case LeftToRight:
-                radiusToApply = (float) (Math.min(areaToCover.right - areaToCover.left, areaToCover.bottom - areaToCover.top) * Math.sqrt(2));
+                if (((areaToCover.right - areaToCover.left) / materialIconView.getBitmapWidth())
+                                + ((areaToCover.bottom - areaToCover.top) / materialIconView.getBitmapHeight())
+                                > 1.9f) {
+                    radiusToApply = (float) (Math.min(areaToCover.right - areaToCover.left, areaToCover.bottom - areaToCover.top) * Math.sqrt(2));
+                } else
+                    radiusToApply = Math.min(areaToCover.right - areaToCover.left, areaToCover.bottom - areaToCover.top);
                 break;
             default:
                 radiusToApply = (float) Math.sqrt(Math.pow(areaToCover.right - areaToCover.left, 2) + Math.pow(areaToCover.bottom - areaToCover.top, 2));

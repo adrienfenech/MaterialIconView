@@ -28,9 +28,6 @@ public class MainActivity extends AppCompatActivity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         rnd = new Random();
-        final DirectionOfTransition[] directionOfTransition = {DirectionOfTransition.UpToDown};
-        final int[] directionOfTransitionId = {0};
-        final int[] i = {0};
 
         final View.OnClickListener onClickListener1 = new View.OnClickListener() {
             @Override
@@ -83,7 +80,6 @@ public class MainActivity extends AppCompatActivity {
 
 
         final MaterialIconView icon1 = (MaterialIconView) findViewById(R.id.icon1);
-        icon1.setMaterialImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_bluetooth_white_48dp));
         icon1.setOnClickListener(onClickListener1);
 
         final MaterialIconView icon2 = (MaterialIconView) findViewById(R.id.icon2);
@@ -188,7 +184,7 @@ public class MainActivity extends AppCompatActivity {
         if (rnd.nextInt(5) == 0)
             view.animateMaterial()
                     .setDuration(500 + rnd.nextInt(1000))
-                    .fromPoint(new Point(view.getBitmapWidth() / 2, view.getBitmapHeight() / 2))
+                    .fromPoint(getRandomOrigin(view))
                     .typeOfTransition(TypeOfTransition.Circle)
                     .directionOfTransition(getRandomDirectOfTransition())
                     .setInterpolator(new AccelerateDecelerateInterpolator())
@@ -223,7 +219,7 @@ public class MainActivity extends AppCompatActivity {
                 .typeOfTransition(getRandomTypeOfTransition())
                 .directionOfTransition(getRandomDirectOfTransition())
                 .toColor(getRandomMaterialColor())
-                .setStartDelay(2000)
+                .setStartDelay(1000)
                 .setDuration(1000)
                 .withDependentAnimationView(new MaterialPropertyAnimator.ViewAnimation() {
                     @Override
@@ -249,7 +245,7 @@ public class MainActivity extends AppCompatActivity {
                 .typeOfTransition(getRandomTypeOfTransition())
                 .directionOfTransition(getRandomDirectOfTransition())
                 .toColor(getRandomMaterialColor())
-                .setStartDelay(2000)
+                .setStartDelay(1000)
                 .setDuration(1000)
                 .withIndependentAnimationView(new MaterialPropertyAnimator.ViewAnimation() {
                     @Override
@@ -284,7 +280,7 @@ public class MainActivity extends AppCompatActivity {
                                 .toColor(MaterialColor.getMaterialColorByIndice(MaterialColor.Cyan, 500))
                                 .directionOfTransition(DirectionOfTransition.RightToLeft)
                                 .setInterpolator(new AccelerateDecelerateInterpolator())
-                                .endingArea(0.6f)
+                                .endingArea(0.5f)
                                 .setListener(new MaterialAnimatorListenerAdapter() {
                                     @Override
                                     public void onAnimationEnd(ValueAnimator animation) {
@@ -304,21 +300,18 @@ public class MainActivity extends AppCompatActivity {
         view.animateMaterial()
                 .toColor(MaterialColor.getMaterialColorByIndice(MaterialColor.Teal, 500))
                 .directionOfTransition(DirectionOfTransition.UpRightToDownLeft)
-                .setInterpolator(new AccelerateDecelerateInterpolator())
-                .endingArea(1f)
 
-             /** New Post Animation **/
-                .newPostAnimation()
+             /** New Concurrent Animation **/
+                .withConcurrentAnimation()
                 .toColor(MaterialColor.getMaterialColorByIndice(MaterialColor.Cyan, 500))
                 .directionOfTransition(DirectionOfTransition.RightToLeft)
-                .setInterpolator(new AccelerateDecelerateInterpolator())
-                .endingArea(0.6f)
+                .setStartDelay(MaterialPropertyAnimator.DEFAULT_ANIMATION_DURATION)
+                .endingArea(0.5f)
 
              /** New Post Animation **/
-                .newPostAnimation()
+                .withPostAnimation()
                 .toColor(MaterialColor.getMaterialColorByIndice(MaterialColor.Blue, 500))
                 .directionOfTransition(DirectionOfTransition.DownRightToUpLeft)
-                .setInterpolator(new AccelerateDecelerateInterpolator())
                 .endingArea(0.4f);
     }
 
@@ -339,7 +332,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -375,7 +367,7 @@ public class MainActivity extends AppCompatActivity {
 
     private int getRandomMaterialColor() {
         int color = MaterialColor.Red;
-        switch (rnd.nextInt(17)) {
+        switch (rnd.nextInt(19)) {
             case 0:
                 color = MaterialColor.Amber;
                 break;
@@ -427,6 +419,10 @@ public class MainActivity extends AppCompatActivity {
             case 16:
                 color = MaterialColor.Grey;
                 break;
+            case 17:
+                return MaterialColor.White;
+            case 18:
+                return MaterialColor.Black;
         }
         return MaterialColor.getMaterialColorByIndice(color, 500);
     }

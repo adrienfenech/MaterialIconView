@@ -58,8 +58,8 @@ public class MaterialColor {
     }
 
     /**
-     * Get a specific color by index. This method use {getMaterialColorSet} with 9 as
-     * variation number. The indice must be in range 0 - 9, or use index
+     * Get a specific color by index. This method use {#getMaterialColorSet()} with 9 as
+     * variation number. The index must be in range 0 - 9, or use index
      * from Material Design Color from Google GuideLines.
      * @param baseColor The base color
      * @param index The index used
