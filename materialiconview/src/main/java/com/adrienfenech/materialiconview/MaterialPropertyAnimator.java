@@ -24,10 +24,16 @@ import java.util.Map;
  * Created by Adrien Fenech on 28/04/16.
  */
 public class MaterialPropertyAnimator {
+    /** Default animation's duration **/
     public static final long DEFAULT_ANIMATION_DURATION = 500; // 500ms
+
     private static final String TAG = "MaterialPtyAnimator";
+
+    /** MaterialIconView used **/
     private final MaterialIconView materialIconView;
-    private final boolean requestFire;
+
+    /** Specify if animation has to be launch with {@link #launchAnimation()} **/
+    private final boolean requestAnimationLaunching;
 
     /**
      * Constants used to associate a property being requested and the mechanism used to set
@@ -89,11 +95,11 @@ public class MaterialPropertyAnimator {
      * with {@link MaterialIconView#animateMaterial()}.
      * @param materialIconView The {@link MaterialIconView} associated
      * @param requestFire Boolean use with {#newPostAnimation()} method.
-     * When @param requestFire is set to true, the animation need a call to {#launchAnimation()} to be executed
+     * When @param requestAnimationLaunching is set to true, the animation need a call to {#launchAnimation()} to be executed
      */
     MaterialPropertyAnimator(MaterialIconView materialIconView, boolean requestFire) {
         this.materialIconView = materialIconView;
-        this.requestFire = requestFire;
+        this.requestAnimationLaunching = requestFire;
 
         animationValues = new HashMap<>();
         fromColorHasBeenSet = false;
@@ -159,7 +165,7 @@ public class MaterialPropertyAnimator {
     }
 
     /**
-     * This method is a syntactic sugar to add an animation when the this one will finish.
+     * This method is a syntactic sugar to add an animation when this one will finish.
      * It'is equivalent to call a new {@link MaterialIconView#animateMaterial()} in {@link MaterialAnimatorListenerAdapter#onAnimationEnd(ValueAnimator)}.
      * This method will return a new MaterialPropertyAnimator which will be called at the end of this one (One frame later)
      * @return A new MaterialPropertyAnimator, allowing calls to methods in this class to be chained.
@@ -174,7 +180,7 @@ public class MaterialPropertyAnimator {
     }
 
     /**
-     * This method is a syntactic sugar to add an animation when the this one will start.
+     * This method is a syntactic sugar to add an animation when this one will start.
      * It'is equivalent to call a new {@link MaterialIconView#animateMaterial()} in {@link MaterialAnimatorListenerAdapter#onAnimationStart(ValueAnimator)}.
      * This method will return a new MaterialPropertyAnimator which will be called at the beginning of this one (One frame later)
      * @return A new MaterialPropertyAnimator, allowing calls to methods in this class to be chained.
@@ -210,7 +216,7 @@ public class MaterialPropertyAnimator {
 
     /**
      * Let you specify the transition type of this animation. By default, Circle is used.
-     * @param typeOfTransition Type to use
+     * @param typeOfTransition Transition to use
      * @return This object, allowing calls to methods in this class to be chained.
      */
     public MaterialPropertyAnimator setTransition(TypeOfTransition typeOfTransition) {
@@ -223,7 +229,7 @@ public class MaterialPropertyAnimator {
 
     /**
      * Let you specify the direction of this animation. By default, DownToUp is used.
-     * @param directionOfTransition Type to use
+     * @param directionOfTransition Direction to use
      * @return This object, allowing calls to methods in this class to be chained.
      */
     public MaterialPropertyAnimator setDirection(DirectionOfTransition directionOfTransition) {
@@ -235,7 +241,7 @@ public class MaterialPropertyAnimator {
     }
 
     /**
-     * Let you specify from which point as to begin the animation. Used only with Circle type.
+     * Let you specify from which point as to begin the animation. Used only with Circle transition.
      * @param point The origin of the transition
      * @return This object, allowing calls to methods in this class to be chained.
      */
@@ -249,6 +255,8 @@ public class MaterialPropertyAnimator {
 
     /**
      * TODO
+     *
+     * Has currently no effect.
      */
     public MaterialPropertyAnimator toPoint(Point point) {
         animationValues.put(TO_POINT, point);
@@ -260,6 +268,7 @@ public class MaterialPropertyAnimator {
 
     /**
      * Let you specify a starting area for your animation. The value has to be in range 0 - 1.
+     * (Default value is 0, means 0% of the total canvas area)
      * @param area The value to be used
      * @return This object, allowing calls to methods in this class to be chained.
      */
@@ -273,6 +282,7 @@ public class MaterialPropertyAnimator {
 
     /**
      * Let you specify an ending area for your animation. The value has to be in range 0 - 1.
+     * (Default value is 1, means 100% of the total canvas area)
      * @param area The value to be used
      * @return This object, allowing calls to methods in this class to be chained.
      */
@@ -286,7 +296,7 @@ public class MaterialPropertyAnimator {
 
     /**
      * Sets the duration for the underlying animator that animates the requested properties.
-     * By default, the animator uses the default value for ValueAnimator. Calling this method
+     * By default, the animator uses {@link #DEFAULT_ANIMATION_DURATION}. Calling this method
      * will cause the declared value to be used instead.
      * @param duration The length of ensuing property animations, in milliseconds. The value
      * cannot be negative.
@@ -302,7 +312,7 @@ public class MaterialPropertyAnimator {
 
     /**
      * Sets the startDelay for the underlying animator that animates the requested properties.
-     * By default, the animator uses the default value for ValueAnimator. Calling this method
+     * By default, the animator uses no delay. Calling this method
      * will cause the declared value to be used instead.
      * @param startDelay The delay of ensuing property animations, in milliseconds. The value
      * cannot be negative.
@@ -368,7 +378,7 @@ public class MaterialPropertyAnimator {
     }
 
     /**
-     * create the animation
+     * Create the animation
      */
     private void generateAnimation() {
         animationRunnable = new Runnable() {
@@ -460,7 +470,7 @@ public class MaterialPropertyAnimator {
             }
         };
 
-        if (!requestFire) {
+        if (!requestAnimationLaunching) {
             materialIconView.removeCallbacks(animationStarter);
             materialIconView.postOnAnimation(animationStarter);
         }
@@ -641,6 +651,12 @@ public class MaterialPropertyAnimator {
     }
 
     public interface ViewAnimation {
+        /**
+         * This method lets you get a {@link ViewPropertyAnimator} object as you can get
+         * with {@link View#animate()} method. You can simply chain call
+         * to methods as basic animation.
+         * @param animator The {@link ViewPropertyAnimator} object
+         */
         void animate(ViewPropertyAnimator animator);
     }
 }
