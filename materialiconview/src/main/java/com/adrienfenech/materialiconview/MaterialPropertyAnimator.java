@@ -17,7 +17,9 @@ import android.view.ViewPropertyAnimator;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -53,6 +55,7 @@ public class MaterialPropertyAnimator {
     static final int ANIMATOR_LISTENER =                0x0050;
     static final int POST_ANIMATION =                   0x0051;
     static final int CONCURRENT_ANIMATION =             0x0052;
+    static final int PREMEDITATE_ACTION =               0x0053;
     static final int INTERPOLATOR =                     0x0060;
 
     private boolean fromColorHasBeenSet =               false;
@@ -69,6 +72,7 @@ public class MaterialPropertyAnimator {
     private boolean interpolatorHasBeenSet =            false;
     private boolean postAnimationHasBeenSet =           false;
     private boolean concurrentAnimationHasBeenSet =     false;
+    private boolean premeditateActionHasBeenSet =       false;
 
     final Map<Integer, Object> animationValues;
 
@@ -116,11 +120,13 @@ public class MaterialPropertyAnimator {
         interpolatorHasBeenSet = true;
         postAnimationHasBeenSet = false;
         concurrentAnimationHasBeenSet = false;
+        premeditateActionHasBeenSet = false;
 
         animationValues.put(DURATION, DEFAULT_ANIMATION_DURATION);
         animationValues.put(TYPE_OF_TRANSITION, TypeOfTransition.Circle);
         animationValues.put(DIRECTION_OF_TRANSITION, DirectionOfTransition.DownToUp);
         animationValues.put(INTERPOLATOR, new LinearInterpolator());
+        animationValues.put(PREMEDITATE_ACTION, new ArrayList<PremeditateAction>());
     }
 
     /**
@@ -370,6 +376,24 @@ public class MaterialPropertyAnimator {
     }
 
     /**
+     * This method let you program a specific action which will be executed when a specific condition is succeed.
+     * The @param premeditateAction object has two methods: {@link PremeditateAction#execute} & {@link PremeditateAction#when}.
+     * The code within the {@link PremeditateAction#execute} method will be execute when the {@link PremeditateAction#when} method will return true.
+     * This action will be executed only one time (when the {@link PremeditateAction#when} method will return true for the first time).
+     * You can add several {@link PremeditateAction} object to the same animation.
+     * @param premeditateAction The premeditate object
+     * @return This object, allowing calls to methods in this class to be chained.
+     */
+    public MaterialPropertyAnimator addPremeditateAction(PremeditateAction premeditateAction) {
+        List<PremeditateAction> premeditateActionList = (List<PremeditateAction>) animationValues.get(PREMEDITATE_ACTION);
+        premeditateActionList.add(premeditateAction);
+        premeditateActionHasBeenSet = true;
+        generateAnimation();
+
+        return this;
+    }
+
+    /**
      * Use to start animation
      */
     private void launchAnimation() {
@@ -388,7 +412,6 @@ public class MaterialPropertyAnimator {
                 if (toColorHasBeenSet)
                     toColor = (int) animationValues.get(TO_COLOR);
 
-                //
                 if (fromColorHasBeenSet) {
                     Paint paint = new Paint();
                     paint.setAntiAlias(true);
@@ -397,7 +420,7 @@ public class MaterialPropertyAnimator {
                     materialIconView.canvas.drawRect(0, 0, materialIconView.originalBitmapWidth, materialIconView.originalBitmapHeight, paint);
                     materialIconView.setImageDrawable(new BitmapDrawable(materialIconView.context.getResources(), materialIconView.canvasBitmap));
                 }
-                //
+
                 final Paint paint = new Paint();
                 paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP));
                 paint.setAntiAlias(true);
@@ -408,6 +431,8 @@ public class MaterialPropertyAnimator {
 
                 anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                     @Override public void onAnimationUpdate(ValueAnimator animation) {
+                        if (premeditateActionHasBeenSet)
+                            managePremeditateAction(animation);
                         if (animatorListenerHasBeenSet)
                             ((MaterialAnimatorListenerAdapter)animationValues.get(ANIMATOR_LISTENER)).onAnimationUpdate(animation);
                         Pair<Point, RectF> originAndArea = generateOriginAndRelativeAreaToCover(animation);
@@ -474,6 +499,22 @@ public class MaterialPropertyAnimator {
             materialIconView.removeCallbacks(animationStarter);
             materialIconView.postOnAnimation(animationStarter);
         }
+    }
+
+    private void managePremeditateAction(ValueAnimator animator) {
+        List<PremeditateAction> allActions = (List<PremeditateAction>) animationValues.get(PREMEDITATE_ACTION);
+        List<PremeditateAction> actionDone = new ArrayList<PremeditateAction>();
+
+        for (PremeditateAction premeditateAction : allActions) {
+            if (premeditateAction.when(materialIconView, animator)) {
+                premeditateAction.execute(materialIconView, animator);
+                actionDone.add(premeditateAction);
+            }
+        }
+
+        allActions.removeAll(actionDone);
+        if (allActions.size() == 0)
+            premeditateActionHasBeenSet = false;
     }
 
     /**
@@ -658,5 +699,10 @@ public class MaterialPropertyAnimator {
          * @param animator The {@link ViewPropertyAnimator} object
          */
         void animate(ViewPropertyAnimator animator);
+    }
+
+    public interface PremeditateAction {
+        void execute(MaterialIconView view, ValueAnimator animator);
+        boolean when(MaterialIconView view, ValueAnimator animator);
     }
 }
