@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#EEEEEE">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:gravity="center_vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.adrienfenech.materialiconview.MaterialIconView
+            android:padding="10dp"
+            android:layout_width="75dp"
+            android:layout_height="75dp"
+            android:id="@+id/progressHorizontal"
+            android:visibility="invisible"/>
+
+        <com.adrienfenech.materialiconview.MaterialIconView
+            android:padding="10dp"
+            android:layout_width="75dp"
+            android:layout_height="75dp"
+            android:id="@+id/progressVertical"
+            android:visibility="invisible"/>
+
+        <com.adrienfenech.materialiconview.MaterialIconView
+            android:padding="10dp"
+            android:layout_width="75dp"
+            android:layout_height="75dp"
+            android:id="@+id/circle"
+            android:src="@drawable/ic_cloud_done_white_48dp"
+            android:visibility="invisible"/>
+
+        <com.adrienfenech.materialiconview.MaterialIconView
+            android:padding="10dp"
+            android:layout_width="75dp"
+            android:layout_height="75dp"
+            android:id="@+id/rectangle"
+            android:src="@drawable/ic_keyboard_white_48dp"
+            android:visibility="invisible"/>
+
+        <com.adrienfenech.materialiconview.MaterialIconView
+            android:padding="10dp"
+            android:layout_width="75dp"
+            android:layout_height="75dp"
+            android:id="@+id/line"
+            android:src="@drawable/ic_send_white_48dp"
+            android:visibility="invisible"/>
+
+        <com.adrienfenech.materialiconview.MaterialIconView
+            android:padding="10dp"
+            android:layout_width="75dp"
+            android:layout_height="75dp"
+            android:id="@+id/android"
+            android:src="@drawable/ic_android_black_48dp"
+            android:visibility="invisible"/>
+
+    </LinearLayout>
+
+    <com.adrienfenech.materialiconview.MaterialIconView
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:id="@+id/mainIcon"/>
+</RelativeLayout>
