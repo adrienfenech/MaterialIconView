@@ -112,7 +112,6 @@ public class PremeditateActivity extends AppCompatActivity {
         Bitmap bitmap = Bitmap.createBitmap(dpToPx(80), dpToPx(525), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         canvas.drawColor(Color.WHITE);
-
         mainIcon.setMaterialImageBitmap(bitmap);
 
         mainIcon.setOnClickListener(new View.OnClickListener() {
@@ -133,7 +132,7 @@ public class PremeditateActivity extends AppCompatActivity {
                 .withDependentAnimationView(new MaterialPropertyAnimator.ViewAnimation() {
                     @Override
                     public void animate(ViewPropertyAnimator animator) {
-                        animator.setInterpolator(new AccelerateDecelerateInterpolator()).translationX(0).scaleX(1f).setListener(new AnimatorListenerAdapter() {
+                        animator.setInterpolator(new AccelerateDecelerateInterpolator()).translationX(0).scaleY(0.2f).scaleX(1f).setListener(new AnimatorListenerAdapter() {
                             /**
                              * {@inheritDoc}
                              *
@@ -144,6 +143,7 @@ public class PremeditateActivity extends AppCompatActivity {
                                 super.onAnimationEnd(animation);
                                 mainIcon.setTranslationX(0);
                                 mainIcon.setScaleX(1f);
+                                mainIcon.setScaleY(0.2f);
                                 launchMainAnimation();
                             }
                         });
@@ -193,6 +193,7 @@ public class PremeditateActivity extends AppCompatActivity {
                                 .setDuration(1000)
                                 .translationX(-dpToPx(150))
                                 .scaleX(0.25f)
+                                .scaleY(1f)
                                 .setListener(new AnimatorListenerAdapter() {
                             /**
                              * {@inheritDoc}
@@ -204,6 +205,7 @@ public class PremeditateActivity extends AppCompatActivity {
                                 super.onAnimationEnd(animation);
                                 mainIcon.setTranslationX(-dpToPx(150));
                                 mainIcon.setScaleX(0.25f);
+                                mainIcon.setScaleY(1f);
                             }
                         });
                     }

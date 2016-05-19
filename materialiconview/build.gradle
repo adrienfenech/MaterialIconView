@@ -38,7 +38,7 @@ ext {
     artifact = 'materialiconview'
 
     libraryDescription = 'Create animation for material icon'
-    libraryVersion = '0.2.0'
+    libraryVersion = '0.2.1'
 
     developerId = 'adrienfenech'
     developerName = 'Adrien Fenech'

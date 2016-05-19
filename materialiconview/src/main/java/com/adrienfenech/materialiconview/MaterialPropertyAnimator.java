@@ -34,8 +34,16 @@ public class MaterialPropertyAnimator {
     /** MaterialIconView used **/
     private final MaterialIconView materialIconView;
 
+    /** ValueAnimator used to perform the animation **/
+    final ValueAnimator anim;
+
+    /** Used if a basic animation is added to this one **/
+    ViewPropertyAnimator viewPropertyAnimator = null;
+
     /** Specify if animation has to be launch with {@link #launchAnimation()} **/
     private final boolean requestAnimationLaunching;
+
+    private final MaterialPropertyAnimator that = this;
 
     /**
      * Constants used to associate a property being requested and the mechanism used to set
@@ -56,6 +64,7 @@ public class MaterialPropertyAnimator {
     static final int POST_ANIMATION =                   0x0051;
     static final int CONCURRENT_ANIMATION =             0x0052;
     static final int PREMEDITATE_ACTION =               0x0053;
+    static final int AREA_LISTENER =                    0x0054;
     static final int INTERPOLATOR =                     0x0060;
 
     private boolean fromColorHasBeenSet =               false;
@@ -73,6 +82,7 @@ public class MaterialPropertyAnimator {
     private boolean postAnimationHasBeenSet =           false;
     private boolean concurrentAnimationHasBeenSet =     false;
     private boolean premeditateActionHasBeenSet =       false;
+    private boolean animationHasBeenCancelled =         false;
 
     final Map<Integer, Object> animationValues;
 
@@ -86,6 +96,7 @@ public class MaterialPropertyAnimator {
     private Runnable animationStarter = new Runnable() {
         @Override
         public void run() {
+            generateAnimation();
             if (startingDelayHasBeenSet) {
                 new Handler().postDelayed(animationRunnable, (Long) animationValues.get(STARTING_DELAY));
             } else {
@@ -103,6 +114,7 @@ public class MaterialPropertyAnimator {
      */
     MaterialPropertyAnimator(MaterialIconView materialIconView, boolean requestFire) {
         this.materialIconView = materialIconView;
+        this.anim = ValueAnimator.ofFloat(0, 1); // animate from 0 to 1
         this.requestAnimationLaunching = requestFire;
 
         animationValues = new HashMap<>();
@@ -121,12 +133,15 @@ public class MaterialPropertyAnimator {
         postAnimationHasBeenSet = false;
         concurrentAnimationHasBeenSet = false;
         premeditateActionHasBeenSet = false;
+        animationHasBeenCancelled = false;
 
         animationValues.put(DURATION, DEFAULT_ANIMATION_DURATION);
         animationValues.put(TYPE_OF_TRANSITION, TypeOfTransition.Circle);
         animationValues.put(DIRECTION_OF_TRANSITION, DirectionOfTransition.DownToUp);
         animationValues.put(INTERPOLATOR, new LinearInterpolator());
         animationValues.put(PREMEDITATE_ACTION, new ArrayList<PremeditateAction>());
+
+        materialIconView.animators.add(this);
     }
 
     /**
@@ -138,7 +153,7 @@ public class MaterialPropertyAnimator {
     public MaterialPropertyAnimator fromColor(final int color) {
         animationValues.put(FROM_COLOR, color);
         fromColorHasBeenSet = true;
-        generateAnimation();
+        enqueueAnimation();
 
         return this;
     }
@@ -151,7 +166,7 @@ public class MaterialPropertyAnimator {
     public MaterialPropertyAnimator toColor(final int color) {
         animationValues.put(TO_COLOR, color);
         toColorHasBeenSet = true;
-        generateAnimation();
+        enqueueAnimation();
 
         return this;
     }
@@ -165,7 +180,7 @@ public class MaterialPropertyAnimator {
     public MaterialPropertyAnimator setListener(MaterialAnimatorListenerAdapter materialAnimatorListenerAdapter) {
         animationValues.put(ANIMATOR_LISTENER, materialAnimatorListenerAdapter);
         animatorListenerHasBeenSet = true;
-        generateAnimation();
+        enqueueAnimation();
 
         return this;
     }
@@ -180,7 +195,7 @@ public class MaterialPropertyAnimator {
         MaterialPropertyAnimator postAnimation = new MaterialPropertyAnimator(materialIconView, true);
         animationValues.put(POST_ANIMATION, postAnimation);
         postAnimationHasBeenSet = true;
-        generateAnimation();
+        enqueueAnimation();
 
         return postAnimation;
     }
@@ -195,7 +210,7 @@ public class MaterialPropertyAnimator {
         MaterialPropertyAnimator concurrentAnimation = new MaterialPropertyAnimator(materialIconView, true);
         animationValues.put(CONCURRENT_ANIMATION, concurrentAnimation);
         concurrentAnimationHasBeenSet = true;
-        generateAnimation();
+        enqueueAnimation();
 
         return concurrentAnimation;
     }
@@ -215,7 +230,7 @@ public class MaterialPropertyAnimator {
 
         animationValues.put(INTERPOLATOR, interpolator);
         interpolatorHasBeenSet = true;
-        generateAnimation();
+        enqueueAnimation();
 
         return this;
     }
@@ -228,7 +243,7 @@ public class MaterialPropertyAnimator {
     public MaterialPropertyAnimator setTransition(TypeOfTransition typeOfTransition) {
         animationValues.put(TYPE_OF_TRANSITION, typeOfTransition);
         typeOfTransitionHasBeenSet = true;
-        generateAnimation();
+        enqueueAnimation();
 
         return this;
     }
@@ -241,7 +256,7 @@ public class MaterialPropertyAnimator {
     public MaterialPropertyAnimator setDirection(DirectionOfTransition directionOfTransition) {
         animationValues.put(DIRECTION_OF_TRANSITION, directionOfTransition);
         directionOfTransitionHasBeenSet = true;
-        generateAnimation();
+        enqueueAnimation();
 
         return this;
     }
@@ -254,7 +269,7 @@ public class MaterialPropertyAnimator {
     public MaterialPropertyAnimator fromPoint(Point point) {
         animationValues.put(FROM_POINT, point);
         fromPointHasBeenSet = true;
-        generateAnimation();
+        enqueueAnimation();
 
         return this;
     }
@@ -267,7 +282,7 @@ public class MaterialPropertyAnimator {
     public MaterialPropertyAnimator toPoint(Point point) {
         animationValues.put(TO_POINT, point);
         toPointHasBeenSet = true;
-        generateAnimation();
+        enqueueAnimation();
 
         return this;
     }
@@ -281,7 +296,7 @@ public class MaterialPropertyAnimator {
     public MaterialPropertyAnimator startingArea(final float area) {
         animationValues.put(STARTING_AREA, area);
         startingAreaHasBeenSet = true;
-        generateAnimation();
+        enqueueAnimation();
 
         return this;
     }
@@ -295,7 +310,7 @@ public class MaterialPropertyAnimator {
     public MaterialPropertyAnimator endingArea(final float area) {
         animationValues.put(ENDING_AREA, area);
         endingAreaHasBeenSet = true;
-        generateAnimation();
+        enqueueAnimation();
 
         return this;
     }
@@ -311,7 +326,7 @@ public class MaterialPropertyAnimator {
     public MaterialPropertyAnimator setDuration(final long duration) {
         animationValues.put(DURATION, duration);
         durationHasBeenSet = true;
-        generateAnimation();
+        enqueueAnimation();
 
         return this;
     }
@@ -327,7 +342,7 @@ public class MaterialPropertyAnimator {
     public MaterialPropertyAnimator setStartDelay(final long startDelay) {
         animationValues.put(STARTING_DELAY, startDelay);
         startingDelayHasBeenSet = true;
-        generateAnimation();
+        enqueueAnimation();
 
         return this;
     }
@@ -348,10 +363,12 @@ public class MaterialPropertyAnimator {
         final long startingDelay = startingDelayHasBeenSet ? (long) animationValues.get(STARTING_DELAY) : 0;
 
         if (durationHasBeenSet)
-            viewAnimation.animate(materialIconView.animate().setStartDelay(startingDelay).setDuration((Long) animationValues.get(DURATION)));
+            viewPropertyAnimator = materialIconView.animate().setStartDelay(startingDelay).setDuration((Long) animationValues.get(DURATION));
         else
-            viewAnimation.animate(materialIconView.animate().setStartDelay(startingDelay));
-        generateAnimation();
+            viewPropertyAnimator = materialIconView.animate().setStartDelay(startingDelay);
+
+        viewAnimation.animate(viewPropertyAnimator);
+        enqueueAnimation();
 
         return this;
     }
@@ -369,8 +386,9 @@ public class MaterialPropertyAnimator {
      * @return This object, allowing calls to methods in this class to be chained.
      */
     public MaterialPropertyAnimator withIndependentAnimationView(ViewAnimation viewAnimation) {
-        viewAnimation.animate(materialIconView.animate());
-        generateAnimation();
+        viewPropertyAnimator = materialIconView.animate();
+        viewAnimation.animate(viewPropertyAnimator);
+        enqueueAnimation();
 
         return this;
     }
@@ -388,13 +406,33 @@ public class MaterialPropertyAnimator {
         List<PremeditateAction> premeditateActionList = (List<PremeditateAction>) animationValues.get(PREMEDITATE_ACTION);
         premeditateActionList.add(premeditateAction);
         premeditateActionHasBeenSet = true;
-        generateAnimation();
+        enqueueAnimation();
 
         return this;
     }
 
     /**
-     * Use to start animation
+     * Cancel the animation associated to this MaterialPropertyAnimator
+     */
+    public void cancel() {
+        animationHasBeenCancelled = true;
+        if (viewPropertyAnimator != null)
+            viewPropertyAnimator.cancel();
+        this.anim.cancel();
+    }
+
+    /**
+     * Enqueue the animation only if it is not a concurrent or a post animation,
+     * in order to generate and launch it next frame.
+     */
+    private void enqueueAnimation() {
+        if (!requestAnimationLaunching) {
+            launchAnimation();
+        }
+    }
+
+    /**
+     * Generate and launch the animation next frame.
      */
     private void launchAnimation() {
         materialIconView.removeCallbacks(animationStarter);
@@ -402,7 +440,7 @@ public class MaterialPropertyAnimator {
     }
 
     /**
-     * Create the animation
+     * Generate the animation
      */
     private void generateAnimation() {
         animationRunnable = new Runnable() {
@@ -426,15 +464,16 @@ public class MaterialPropertyAnimator {
                 paint.setAntiAlias(true);
                 paint.setColor(toColor);
 
-                final ValueAnimator anim = ValueAnimator.ofFloat(0, 1); // animate from 0 to 1
                 anim.setDuration((Long) animationValues.get(DURATION)); // for 300 ms
 
                 anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                    @Override public void onAnimationUpdate(ValueAnimator animation) {
+                    @Override
+                    public void onAnimationUpdate(ValueAnimator animation) {
                         if (premeditateActionHasBeenSet)
                             managePremeditateAction(animation);
-                        if (animatorListenerHasBeenSet)
-                            ((MaterialAnimatorListenerAdapter)animationValues.get(ANIMATOR_LISTENER)).onAnimationUpdate(animation);
+                        if (animatorListenerHasBeenSet) {
+                            ((MaterialAnimatorListenerAdapter) animationValues.get(ANIMATOR_LISTENER)).onAnimationUpdate(animation);
+                        }
                         Pair<Point, RectF> originAndArea = generateOriginAndRelativeAreaToCover(animation);
                         switch ((TypeOfTransition) (animationValues.get(TYPE_OF_TRANSITION))) {
                             case Circle:
@@ -451,30 +490,33 @@ public class MaterialPropertyAnimator {
                 });
 
                 anim.setInterpolator(new AccelerateDecelerateInterpolator());
-
-                if (animatorListenerHasBeenSet) {
-                    final MaterialAnimatorListenerAdapter materialAnimatorListenerAdapter = (MaterialAnimatorListenerAdapter) animationValues.get(ANIMATOR_LISTENER);
-                    anim.addListener(new AnimatorListenerAdapter() {
-                        @Override
-                        public void onAnimationStart(Animator animation) {
-                            super.onAnimationStart(animation);
-                            materialAnimatorListenerAdapter.onAnimationStart(anim);
+                anim.addListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationStart(Animator animation) {
+                        super.onAnimationStart(animation);
+                        if (animatorListenerHasBeenSet) {
+                            ((MaterialAnimatorListenerAdapter) animationValues.get(ANIMATOR_LISTENER)).onAnimationStart(anim);
                         }
+                    }
 
-                        @Override
-                        public void onAnimationEnd(Animator animation) {
-                            super.onAnimationEnd(animation);
-                            materialAnimatorListenerAdapter.onAnimationEnd(anim);
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        super.onAnimationEnd(animation);
+                        if (animatorListenerHasBeenSet) {
+                            ((MaterialAnimatorListenerAdapter) animationValues.get(ANIMATOR_LISTENER)).onAnimationEnd(anim);
                         }
-                    });
-                }
+                        materialIconView.removeMaterialAnimator(that);
+                    }
+                });
 
                 if (concurrentAnimationHasBeenSet) {
                     anim.addListener(new AnimatorListenerAdapter() {
                         @Override
                         public void onAnimationStart(Animator animation) {
                             super.onAnimationStart(animation);
-                            ((MaterialPropertyAnimator)animationValues.get(CONCURRENT_ANIMATION)).launchAnimation();
+                            if (animationHasBeenCancelled)
+                                return;
+                            ((MaterialPropertyAnimator) animationValues.get(CONCURRENT_ANIMATION)).launchAnimation();
                         }
                     });
                 }
@@ -484,7 +526,9 @@ public class MaterialPropertyAnimator {
                         @Override
                         public void onAnimationEnd(Animator animation) {
                             super.onAnimationEnd(animation);
-                            ((MaterialPropertyAnimator)animationValues.get(POST_ANIMATION)).launchAnimation();
+                            if (animationHasBeenCancelled)
+                                return;
+                            ((MaterialPropertyAnimator) animationValues.get(POST_ANIMATION)).launchAnimation();
                         }
                     });
                 }
@@ -494,13 +538,12 @@ public class MaterialPropertyAnimator {
                 anim.start();
             }
         };
-
-        if (!requestAnimationLaunching) {
-            materialIconView.removeCallbacks(animationStarter);
-            materialIconView.postOnAnimation(animationStarter);
-        }
     }
 
+    /**
+     * Manage all PremeditateAction objects
+     * @param animator
+     */
     private void managePremeditateAction(ValueAnimator animator) {
         List<PremeditateAction> allActions = (List<PremeditateAction>) animationValues.get(PREMEDITATE_ACTION);
         List<PremeditateAction> actionDone = new ArrayList<PremeditateAction>();
@@ -544,6 +587,10 @@ public class MaterialPropertyAnimator {
         float animatedFraction = animator.getAnimatedFraction();
         float start = startingAreaFraction - startingAreaFraction * animatedFraction;
         float end = animatedFraction * endingAreaFraction;
+
+        if (animatorListenerHasBeenSet) {
+            ((MaterialAnimatorListenerAdapter) animationValues.get(ANIMATOR_LISTENER)).onAreaCoveredUpdate(animator, start + end);
+        }
 
         switch ((DirectionOfTransition)(animationValues.get(DIRECTION_OF_TRANSITION))) {
             case UpToDown:
@@ -642,7 +689,6 @@ public class MaterialPropertyAnimator {
 
         boolean shouldBeARectangle = false;
         final float width = (float) Math.sqrt(Math.pow(areaToCover.right - areaToCover.left, 2) + Math.pow(areaToCover.bottom - areaToCover.top, 2));
-        final float semiWidth = width / 2;
 
         switch (((DirectionOfTransition)animationValues.get(DIRECTION_OF_TRANSITION))) {
             case UpToDown:
@@ -702,7 +748,21 @@ public class MaterialPropertyAnimator {
     }
 
     public interface PremeditateAction {
+
+        /**
+         * The code within the execute method will be executed when the {@link #when} method
+         * will return true for the first time.
+         * @param view Current view which is animated
+         * @param animator Animator object updated
+         */
         void execute(MaterialIconView view, ValueAnimator animator);
+
+        /**
+         * Method to indicate when the execute method has to be executed.
+         * @param view Current view which is animated
+         * @param animator Animator object updated
+         * @return Boolean indicates if the execute method has to be executed
+         */
         boolean when(MaterialIconView view, ValueAnimator animator);
     }
 }

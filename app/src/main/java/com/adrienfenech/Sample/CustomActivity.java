@@ -18,13 +18,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-public class MainActivity extends AppCompatActivity {
+public class CustomActivity extends AppCompatActivity {
     Random rnd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.custom_layout);
         rnd = new Random();
 
         findViewById(R.id.icon1).setOnClickListener(new View.OnClickListener() {

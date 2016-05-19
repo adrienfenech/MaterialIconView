@@ -10,6 +10,9 @@ import android.graphics.drawable.BitmapDrawable;
 import android.util.AttributeSet;
 import android.widget.ImageView;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by Adrien Fenech on 27/04/16.
  */
@@ -21,6 +24,8 @@ public class MaterialIconView extends ImageView {
     int lastColor;
     int originalBitmapWidth = 0;
     int originalBitmapHeight = 0;
+
+    final List<MaterialPropertyAnimator> animators = new ArrayList<>();
 
     public MaterialIconView(Context context) {
         super(context);
@@ -63,6 +68,12 @@ public class MaterialIconView extends ImageView {
         return new MaterialPropertyAnimator(this, false);
     }
 
+    MaterialPropertyAnimator animateMaterial(MaterialPropertyAnimator animator) {
+        if (originalBitmap == null)
+            throw new MaterialIconViewError("Bitmap null. Did you miss a call to setMaterialImageBitmap() ?");
+        return animator;
+    }
+
     /**
      * Set a Bitmap Image to this view.
      * @param bitmap Image to set
@@ -87,6 +98,15 @@ public class MaterialIconView extends ImageView {
         Paint paint = new Paint();
         paint.setAntiAlias(true);
         canvas.drawBitmap(originalBitmap, null, new Rect(0, 0, originalBitmapWidth, originalBitmapHeight), paint);
+    }
+
+    public void cancelAllMaterialAnimation() {
+        for (int i = animators.size() - 1; i >= 0; i--)
+            animators.get(i).cancel();
+    }
+
+    void removeMaterialAnimator(MaterialPropertyAnimator animator) {
+        animators.remove(animator);
     }
 
     public int getBitmapWidth() {

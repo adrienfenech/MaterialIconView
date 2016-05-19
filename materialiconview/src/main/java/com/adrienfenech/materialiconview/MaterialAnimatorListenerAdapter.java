@@ -30,4 +30,12 @@ public abstract class MaterialAnimatorListenerAdapter {
      */
     public void onAnimationUpdate(ValueAnimator animation) {
     }
+
+    /**
+     * <p>Notifies the occurrence of another frame of the animation with the current area covered.</p>
+     * @param animation
+     * @param areaCovered
+     */
+    public void onAreaCoveredUpdate(ValueAnimator animation, float areaCovered) {
+    }
 }
