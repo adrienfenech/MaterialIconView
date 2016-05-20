@@ -29,8 +29,6 @@ public class MaterialPropertyAnimator {
     /** Default animation's duration **/
     public static final long DEFAULT_ANIMATION_DURATION = 500; // 500ms
 
-    private static final String TAG = "MaterialPtyAnimator";
-
     /** MaterialIconView used **/
     private final MaterialIconView materialIconView;
 
@@ -446,6 +444,8 @@ public class MaterialPropertyAnimator {
         animationRunnable = new Runnable() {
             @Override
             public void run() {
+                if (animationHasBeenCancelled)
+                    return;
                 int toColor = materialIconView.lastColor;
                 if (toColorHasBeenSet)
                     toColor = (int) animationValues.get(TO_COLOR);
