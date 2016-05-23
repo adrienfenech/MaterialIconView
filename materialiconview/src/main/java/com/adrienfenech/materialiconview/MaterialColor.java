@@ -8,7 +8,7 @@ import java.util.Collections;
 /**
  * Created by Adrien Fenech on 02/05/16.
  */
-public class MaterialColor {
+public class MaterialColor extends Color {
 
     public static final int Red =           Color.parseColor("#F44336");
     public static final int Pink =          Color.parseColor("#E91E63");

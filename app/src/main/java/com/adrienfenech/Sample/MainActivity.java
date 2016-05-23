@@ -34,6 +34,7 @@ import static com.adrienfenech.Sample.AnimationHelper.launchRectangleAnimation;
 import static com.adrienfenech.Sample.AnimationHelper.launchVerticalAnimation;
 import static com.adrienfenech.Sample.MaterialHelper.getRandomDirectOfTransition;
 import static com.adrienfenech.Sample.MaterialHelper.getRandomMaterialColor;
+import static com.adrienfenech.Sample.MaterialHelper.getRandomTypeOfTransition;
 
 /**
  * Created by octo on 19/05/16.
@@ -159,7 +160,7 @@ public class MainActivity extends AppCompatActivity {
         // Fill menu item with menuColor
         view.animateMaterial()
                 .setDuration(1500)
-                .setTransition(TypeOfTransition.Line)
+                .setTransition(getRandomTypeOfTransition())
                 .setDirection(getRandomDirectOfTransition())
                 .setInterpolator(new AccelerateDecelerateInterpolator())
                 .toColor(menuColor)

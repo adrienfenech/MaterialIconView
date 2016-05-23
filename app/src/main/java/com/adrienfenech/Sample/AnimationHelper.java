@@ -32,13 +32,13 @@ public class AnimationHelper {
                 .setTransition(TypeOfTransition.Line)
                 .setDirection(DirectionOfTransition.LeftToRight)
                 .toColor(getRandomMaterialColor())
-                .setDuration(1500)
+                .setDuration(500 + rnd.nextInt(1000))
 
                 .withPostAnimation()
                 .setTransition(TypeOfTransition.Line)
                 .setDirection(DirectionOfTransition.RightToLeft)
                 .toColor(getRandomMaterialColor())
-                .setDuration(1500)
+                .setDuration(500 + rnd.nextInt(1000))
                 .setListener(new MaterialAnimatorListenerAdapter() {
                     /**
                      * <p>Notifies the end of the animation.</p>
@@ -58,13 +58,13 @@ public class AnimationHelper {
         mainView.animateMaterial()
                 .setTransition(TypeOfTransition.Line)
                 .setDirection(DirectionOfTransition.DownToUp)
-                .toColor(getRandomMaterialColor())
+                .toColor(getRandomMaterialColor(), getRandomMaterialColor())
                 .setDuration(1500)
 
                 .withPostAnimation()
                 .setTransition(TypeOfTransition.Line)
                 .setDirection(DirectionOfTransition.UpToDown)
-                .toColor(getRandomMaterialColor())
+                .toColor(getRandomMaterialColor(), getRandomMaterialColor())
                 .setDuration(1500)
                 .setListener(new MaterialAnimatorListenerAdapter() {
                     /**

@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.TimeInterpolator;
 import android.animation.ValueAnimator;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
@@ -11,7 +12,6 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Handler;
-import android.util.Pair;
 import android.view.View;
 import android.view.ViewPropertyAnimator;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -65,7 +65,7 @@ public class MaterialPropertyAnimator {
     static final int AREA_LISTENER =                    0x0054;
     static final int INTERPOLATOR =                     0x0060;
 
-    private boolean fromColorHasBeenSet =               false;
+    private boolean fromColorToColorHasBeenSet =        false;
     private boolean toColorHasBeenSet =                 false;
     private boolean typeOfTransitionHasBeenSet =        false;
     private boolean directionOfTransitionHasBeenSet =   false;
@@ -116,7 +116,7 @@ public class MaterialPropertyAnimator {
         this.requestAnimationLaunching = requestFire;
 
         animationValues = new HashMap<>();
-        fromColorHasBeenSet = false;
+        fromColorToColorHasBeenSet = false;
         toColorHasBeenSet = false;
         typeOfTransitionHasBeenSet = true;
         directionOfTransitionHasBeenSet = true;
@@ -143,27 +143,32 @@ public class MaterialPropertyAnimator {
     }
 
     /**
-     * This method will cause the canvas to be paint with a specific color when the
-     * animation is started.
-     * @param color Color to use
-     * @return This object, allowing calls to methods in this class to be chained.
+     * This method will cause the canvas to be paint with a specific color according
+     * to the animation.
+     * @param fromColor Starting color to use
+     * @param toColor Ending color to use
+     * @return
      */
-    public MaterialPropertyAnimator fromColor(final int color) {
-        animationValues.put(FROM_COLOR, color);
-        fromColorHasBeenSet = true;
+    public MaterialPropertyAnimator toColor(final int fromColor, final int toColor) {
+        animationValues.put(FROM_COLOR, fromColor);
+        animationValues.put(TO_COLOR, toColor);
+        fromColorToColorHasBeenSet = true;
+        toColorHasBeenSet = false;
         enqueueAnimation();
 
         return this;
     }
 
     /**
-     * This method will cause the canvas to be paint with a specific color according to animation.
-     * @param color Color to use
+     * This method will cause the canvas to be paint with a specific color according
+     * to the animation.
+     * @param toColor End color to use
      * @return This object, allowing calls to methods in this class to be chained.
      */
-    public MaterialPropertyAnimator toColor(final int color) {
-        animationValues.put(TO_COLOR, color);
+    public MaterialPropertyAnimator toColor(final int toColor) {
+        animationValues.put(TO_COLOR, toColor);
         toColorHasBeenSet = true;
+        fromColorToColorHasBeenSet = false;
         enqueueAnimation();
 
         return this;
@@ -446,44 +451,38 @@ public class MaterialPropertyAnimator {
             public void run() {
                 if (animationHasBeenCancelled)
                     return;
-                int toColor = materialIconView.lastColor;
-                if (toColorHasBeenSet)
-                    toColor = (int) animationValues.get(TO_COLOR);
-
-                if (fromColorHasBeenSet) {
-                    Paint paint = new Paint();
-                    paint.setAntiAlias(true);
-                    paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP));
-                    paint.setColor((Integer) animationValues.get(FROM_COLOR));
-                    materialIconView.canvas.drawRect(0, 0, materialIconView.originalBitmapWidth, materialIconView.originalBitmapHeight, paint);
-                    materialIconView.setImageDrawable(new BitmapDrawable(materialIconView.context.getResources(), materialIconView.canvasBitmap));
-                }
+                final int toColor = toColorHasBeenSet || fromColorToColorHasBeenSet ? (int) animationValues.get(TO_COLOR) : materialIconView.lastColor;
+                final int fromColor = fromColorToColorHasBeenSet ? (int) animationValues.get(FROM_COLOR) : toColor;
 
                 final Paint paint = new Paint();
                 paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP));
                 paint.setAntiAlias(true);
                 paint.setColor(toColor);
 
-                anim.setDuration((Long) animationValues.get(DURATION)); // for 300 ms
+                anim.setDuration((Long) animationValues.get(DURATION));
+
+                final Point fromPoint = generateOrigin();
+                final float maxRadiusToApply = getMaxRadiusToApply(fromPoint);
 
                 anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                     @Override
                     public void onAnimationUpdate(ValueAnimator animation) {
                         if (premeditateActionHasBeenSet)
                             managePremeditateAction(animation);
-                        if (animatorListenerHasBeenSet) {
+                        if (animatorListenerHasBeenSet)
                             ((MaterialAnimatorListenerAdapter) animationValues.get(ANIMATOR_LISTENER)).onAnimationUpdate(animation);
+                        if (fromColorToColorHasBeenSet) {
+                            paint.setColor(animateColor(fromColor, toColor, animation.getAnimatedFraction()));
                         }
-                        Pair<Point, RectF> originAndArea = generateOriginAndRelativeAreaToCover(animation);
                         switch ((TypeOfTransition) (animationValues.get(TYPE_OF_TRANSITION))) {
                             case Circle:
-                                animateCircle(originAndArea.first, originAndArea.second, paint);
+                                animateCircle(fromPoint, maxRadiusToApply, animation, paint);
                                 break;
                             case Line:
-                                animateLine(originAndArea.second, paint);
+                                animateLine(generateRelativeAreaToCover(animation), paint);
                                 break;
                             case Rect:
-                                animateRectangle(originAndArea.second, paint);
+                                animateRectangle(generateRelativeAreaToCover(animation), paint);
                                 break;
                         }
                     }
@@ -541,6 +540,42 @@ public class MaterialPropertyAnimator {
     }
 
     /**
+     * Animate colors according to the animation.
+     * Used only if fromColorToColorHasBeenSet is set to true.
+     * @param from Starting color to use
+     * @param to Ending color to use
+     * @param ratio current animatedFraction of the animation
+     * @return The animated color
+     */
+    private int animateColor(int from, int to, float ratio) {
+        final float inverseRatio = 1f - ratio;
+
+        int red = (int)Math.abs((ratio * Color.red(to)) + (inverseRatio * Color.red(from)));
+        int green = (int)Math.abs((ratio * Color.green(to)) + (inverseRatio * Color.green(from)));
+        int blue = (int)Math.abs((ratio * Color.blue(to)) + (inverseRatio * Color.blue(from)));
+
+        return Color.rgb(red, green, blue);
+    }
+
+    /**
+     * Compute the maximum radius that will be use in case of Circle Animation.
+     * The radius is determining with the maximum between the origin point and the four corners
+     * of the bitmap.
+     * @param fromPoint The origin
+     * @return The maxium radius to apply
+     */
+    private float getMaxRadiusToApply(Point fromPoint) {
+        float centerX = fromPoint.x;
+        float centerY = fromPoint.y;
+        double d1 = Math.hypot(centerX, centerY);
+        double d2 = Math.hypot(centerX - materialIconView.getBitmapWidth(), centerY);
+        double d3 = Math.hypot(centerX - materialIconView.getBitmapWidth(), centerY - materialIconView.getBitmapHeight());
+        double d4 = Math.hypot(centerX, centerY - materialIconView.getBitmapHeight());
+
+        return (float) Math.max(d1, Math.max(d2, Math.max(d3, d4)));
+    }
+
+    /**
      * Manage all PremeditateAction objects
      * @param animator
      */
@@ -561,12 +596,53 @@ public class MaterialPropertyAnimator {
     }
 
     /**
-     * Create the area of current animation which has to be paint.
-     * @param animator The animation
+     * Get the origin of the animation (Used in case of Circle Animation)
      * @return A Pair which contains the origin point of the rectangle and the rectangle
      * representing the area covered.
      */
-    private Pair<Point, RectF> generateOriginAndRelativeAreaToCover(ValueAnimator animator) {
+    private Point generateOrigin() {
+        if (fromPointHasBeenSet)
+            return (Point) animationValues.get(FROM_POINT);
+
+        float rectX1 = 0;
+        float rectY1 = 0;
+        float rectX2 = materialIconView.originalBitmapWidth;
+        float rectY2 = materialIconView.originalBitmapHeight;
+
+        switch ((DirectionOfTransition)(animationValues.get(DIRECTION_OF_TRANSITION))) {
+            case UpToDown:
+                return new Point((int)rectX2 / 2, (int)rectY1);
+
+            case UpRightToDownLeft:
+                return new Point((int)rectX2, (int)rectY1);
+
+            case RightToLeft:
+                return new Point((int)rectX2, (int)rectY2 / 2);
+
+            case DownRightToUpLeft:
+                return new Point((int)rectX2, (int)rectY2);
+
+            case DownToUp:
+                return new Point((int)rectX2 / 2, (int)rectY2);
+
+            case DownLeftToUpRight:
+                return new Point((int)rectX1, (int)rectY2);
+
+            case LeftToRight:
+                return new Point((int)rectX1, (int)rectY2 / 2);
+
+            case UpLeftToDownRight:
+                return new Point((int)rectX1, (int)rectY1);
+        }
+        return new Point((int)rectX2 / 2, (int)rectY2 / 2);
+    }
+
+    /**
+     * Create the area of current animation which has to be paint.
+     * @param animator The animation
+     * @return A rectangle representing the area covered.
+     */
+    private RectF generateRelativeAreaToCover(ValueAnimator animator) {
         float rectX1 = 0;
         float rectY1 = 0;
         float rectX2 = materialIconView.originalBitmapWidth;
@@ -595,74 +671,67 @@ public class MaterialPropertyAnimator {
         switch ((DirectionOfTransition)(animationValues.get(DIRECTION_OF_TRANSITION))) {
             case UpToDown:
                 newRectY2 = rectY2 * end + rectY2 * (start);
-                return new Pair<>(new Point((int)rectX2 / 2, (int)rectY1), new RectF(rectX1, rectY1, rectX2, newRectY2));
+                return new RectF(rectX1, rectY1, rectX2, newRectY2);
 
             case UpRightToDownLeft:
                 newRectX1 = rectX2 - (rectX2 * end + rectX2 * (start));
                 newRectY2 = rectY2 * end + rectY2 * (start);
-                return new Pair<>(new Point((int)rectX2, (int)rectY1), new RectF(newRectX1, rectY1, rectX2, newRectY2));
+                return new RectF(newRectX1, rectY1, rectX2, newRectY2);
 
             case RightToLeft:
                 newRectX1 = rectX2 - (rectX2 * end + rectX2 * (start));
-                return new Pair<>(new Point((int)rectX2, (int)rectY2 / 2), new RectF(newRectX1, rectY1, rectX2, rectY2));
+                return new RectF(newRectX1, rectY1, rectX2, rectY2);
 
             case DownRightToUpLeft:
                 newRectX1 = rectX2 - (rectX2 * end + rectX2 * (start));
                 newRectY1 = rectY2 - (rectY2 * end + rectY2 * (start));
-                return new Pair<>(new Point((int)rectX2, (int)rectY2), new RectF(newRectX1, newRectY1, rectX2, rectY2));
+                return new RectF(newRectX1, newRectY1, rectX2, rectY2);
 
             case DownToUp:
                 newRectY1 = rectY2 - (rectY2 * end + rectY2 * (start));
-                return new Pair<>(new Point((int)rectX2 / 2, (int)rectY2), new RectF(rectX1, newRectY1, rectX2, rectY2));
+                return new RectF(rectX1, newRectY1, rectX2, rectY2);
 
             case DownLeftToUpRight:
                 newRectY1 = rectY2 - (rectY2 * end + rectY2 * (start));
                 newRectX2 = rectX2 * end + rectX2 * (start);
-                return new Pair<>(new Point((int)rectX1, (int)rectY2), new RectF(rectX1, newRectY1, newRectX2, rectY2));
+                return new RectF(rectX1, newRectY1, newRectX2, rectY2);
 
             case LeftToRight:
                 newRectX2 = rectX2 * end + rectX2 * (start);
-                return new Pair<>(new Point((int)rectX1, (int)rectY2 / 2), new RectF(rectX1, rectY1, newRectX2, rectY2));
+                return new RectF(rectX1, rectY1, newRectX2, rectY2);
 
             case UpLeftToDownRight:
                 newRectX2 = rectX2 * end + rectX2 * (start);
                 newRectY2 = rectY2 * end + rectY2 * (start);
-                return new Pair<>(new Point((int)rectX1, (int)rectY1), new RectF(rectX1, rectY1, newRectX2, newRectY2));
+                return new RectF(rectX1, rectY1, newRectX2, newRectY2);
         }
-        return new Pair<>(new Point(), new RectF(0, 0, 0, 0));
+        return new RectF(0, 0, 0, 0);
     }
 
     /**
      * Use to draw the circle
      * @param origin The origin
-     * @param areaToCover The area to cover
      * @param paint The paint object used
      */
-    private void animateCircle(Point origin, RectF areaToCover, Paint paint) {
-        if (fromPointHasBeenSet)
-            origin = (Point) animationValues.get(FROM_POINT);
-        int centerX = origin.x;
-        int centerY = origin.y;
+    private void animateCircle(Point origin, float maxRadiusToApply, ValueAnimator animator, Paint paint) {
+        float startingAreaFraction = 0;
+        float endingAreaFraction = 1;
+        if (startingAreaHasBeenSet)
+            startingAreaFraction = (float) animationValues.get(STARTING_AREA);
+        if (endingAreaHasBeenSet)
+            endingAreaFraction = (float) animationValues.get(ENDING_AREA);
 
-        float radiusToApply;
+        float animatedFraction = animator.getAnimatedFraction();
+        float start = startingAreaFraction - startingAreaFraction * animatedFraction;
+        float end = animatedFraction * endingAreaFraction;
 
-        switch (((DirectionOfTransition)animationValues.get(DIRECTION_OF_TRANSITION))) {
-            case UpToDown:
-            case RightToLeft:
-            case DownToUp:
-            case LeftToRight:
-                if (((areaToCover.right - areaToCover.left) / materialIconView.getBitmapWidth())
-                        + ((areaToCover.bottom - areaToCover.top) / materialIconView.getBitmapHeight())
-                        > 1.925f) {
-                    radiusToApply = (float) (Math.min(areaToCover.right - areaToCover.left, areaToCover.bottom - areaToCover.top) * Math.sqrt(2));
-                } else
-                    radiusToApply = Math.min(areaToCover.right - areaToCover.left, areaToCover.bottom - areaToCover.top);
-                break;
-            default:
-                radiusToApply = (float) Math.sqrt(Math.pow(areaToCover.right - areaToCover.left, 2) + Math.pow(areaToCover.bottom - areaToCover.top, 2));
-                break;
+        if (animatorListenerHasBeenSet) {
+            ((MaterialAnimatorListenerAdapter) animationValues.get(ANIMATOR_LISTENER)).onAreaCoveredUpdate(animator, start + end);
         }
-        materialIconView.canvas.drawCircle(centerX, centerY, radiusToApply, paint);
+
+        float radiusToApply = maxRadiusToApply * (start + end);
+
+        materialIconView.canvas.drawCircle(origin.x, origin.y, radiusToApply, paint);
         materialIconView.setImageDrawable(new BitmapDrawable(materialIconView.context.getResources(), materialIconView.canvasBitmap));
     }
 
