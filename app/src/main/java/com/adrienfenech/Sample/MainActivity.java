@@ -31,6 +31,7 @@ import static com.adrienfenech.Sample.AnimationHelper.launchCircleAnimation;
 import static com.adrienfenech.Sample.AnimationHelper.launchHorizontalAnimation;
 import static com.adrienfenech.Sample.AnimationHelper.launchLineAnimation;
 import static com.adrienfenech.Sample.AnimationHelper.launchRectangleAnimation;
+import static com.adrienfenech.Sample.AnimationHelper.launchTouchAnimation;
 import static com.adrienfenech.Sample.AnimationHelper.launchVerticalAnimation;
 import static com.adrienfenech.Sample.MaterialHelper.getRandomDirectOfTransition;
 import static com.adrienfenech.Sample.MaterialHelper.getRandomMaterialColor;
@@ -44,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
 
     boolean isBlankBitmap = true;
     int menuColor = MaterialColor.BlueGrey;
+    private boolean isInTouchAnimation = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
         materialViews.add((MaterialIconView) findViewById(R.id.rectangle));
         materialViews.add((MaterialIconView) findViewById(R.id.line));
         materialViews.add((MaterialIconView) findViewById(R.id.android));
+        materialViews.add((MaterialIconView) findViewById(R.id.touch));
 
         for (int i = 0; i < materialViews.size(); i++) {
             final MaterialIconView view = materialViews.get(i);
@@ -68,10 +71,14 @@ public class MainActivity extends AppCompatActivity {
                         tempView.setClickable(false);
                     cancelAllAnimations();
                     hideItemsButNotThisView(view);
+                    if (finalI == materialViews.size() - 1)
+                        isInTouchAnimation = !isInTouchAnimation;
                     resetMenu(finalI);
                 }
             });
         }
+
+        MaterialIconView view;
 
         resetMainIcon();
 
@@ -143,6 +150,7 @@ public class MainActivity extends AppCompatActivity {
                 .addPremeditateAction(generatePremeditateAction(4))
                 .addPremeditateAction(generatePremeditateAction(5))
                 .addPremeditateAction(generatePremeditateAction(6))
+                .addPremeditateAction(generatePremeditateAction(7))
                 .setListener(new MaterialAnimatorListenerAdapter() {
                     @Override
                     public void onAnimationEnd(ValueAnimator animation) {
@@ -251,6 +259,9 @@ public class MainActivity extends AppCompatActivity {
                             case 6:
                                 launchAndroidAnimation(mainView);
                                 return;
+                            case 7:
+                                launchTouchAnimation(mainView);
+                                return;
                             default:
                                 materialViews.get(0).setClickable(false);
                                 launchMenuAnimation();
@@ -327,6 +338,20 @@ public class MainActivity extends AppCompatActivity {
                                         case 6:
                                             updateToNewBitmapAndLaunchAnimation(R.drawable.ic_android_black_48dp, animationToLaunch);
                                             return;
+                                        case 7:
+                                            swapTouchItem();
+                                            mainView.animate().scaleX(3f).scaleY(3f).setListener(new AnimatorListenerAdapter() {
+                                                @Override
+                                                public void onAnimationEnd(Animator animation) {
+                                                    super.onAnimationEnd(animation);
+                                                    mainView.setScaleX(3f);
+                                                    mainView.setScaleY(3f);
+                                                }
+                                            });
+                                            mainView.setClickable(true);
+                                            materialViews.get(7).setClickable(true);
+                                            launchTouchAnimation(mainView);
+                                            return;
                                         default:
                                             launchMenuAnimation();
                                     }
@@ -345,6 +370,9 @@ public class MainActivity extends AppCompatActivity {
                                             return;
                                         case 6:
                                             launchAndroidAnimation(mainView);
+                                            return;
+                                        case 7:
+                                            launchTouchAnimation(mainView);
                                             return;
                                         default:
                                             updateToNewBitmapAndLaunchAnimation(-1, animationToLaunch);
@@ -365,9 +393,69 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public boolean when(MaterialIconView view, ValueAnimator animator) {
-                return animator.getAnimatedFraction() >= (float)(itemPosition) / 7;
+                return animator.getAnimatedFraction() >= (float)(itemPosition) / 8;
             }
         };
+    }
+
+    private void swapTouchItem() {
+        final MaterialIconView touchItemView = materialViews.get(materialViews.size() - 1);
+        touchItemView.setClickable(false);
+            touchItemView.animate().scaleX(0).scaleY(0).setDuration(400).setListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    super.onAnimationEnd(animation);
+                    touchItemView.setScaleX(0);
+                    touchItemView.setScaleY(0);
+
+                    if (isInTouchAnimation) {
+                        touchItemView.setMaterialImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_menu_white_48dp));
+                        touchItemView.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                for (MaterialIconView tempView : materialViews)
+                                    tempView.setClickable(false);
+                                cancelAllAnimations();
+                                hideItemsButNotThisView(materialViews.get(0));
+                                isInTouchAnimation = !isInTouchAnimation;
+                                resetMenu(0);
+                                swapTouchItem();
+                            }
+                        });
+                    }
+                    else {
+                        materialViews.get(0).setOnTouchListener(null);
+
+                        touchItemView.setMaterialImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_touch_app_white_48dp));
+                        touchItemView.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                for (MaterialIconView tempView : materialViews)
+                                    tempView.setClickable(false);
+                                cancelAllAnimations();
+                                hideItemsButNotThisView((MaterialIconView)v);
+                                isInTouchAnimation = !isInTouchAnimation;
+                                resetMenu(materialViews.size() - 1);
+                            }
+                        });
+                    }
+
+                    touchItemView.animateMaterial().toColor(menuColor).withDependentAnimationView(new MaterialPropertyAnimator.ViewAnimation() {
+                        @Override
+                        public void animate(ViewPropertyAnimator animator) {
+                            touchItemView.animate().scaleX(1).scaleY(1).setListener(new AnimatorListenerAdapter() {
+                                @Override
+                                public void onAnimationEnd(Animator animation) {
+                                    super.onAnimationEnd(animation);
+                                    touchItemView.setScaleX(1);
+                                    touchItemView.setScaleY(1);
+                                    touchItemView.setClickable(true);
+                                }
+                            });
+                        }
+                    });
+                }
+            });
     }
 
     private int dpToPx(int dp) {

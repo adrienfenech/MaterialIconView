@@ -57,6 +57,14 @@
             android:src="@drawable/ic_android_black_48dp"
             android:visibility="invisible"/>
 
+        <com.adrienfenech.materialiconview.MaterialIconView
+            android:padding="10dp"
+            android:layout_width="75dp"
+            android:layout_height="75dp"
+            android:id="@+id/touch"
+            android:src="@drawable/ic_touch_app_white_48dp"
+            android:visibility="invisible"/>
+
     </LinearLayout>
 
     <com.adrienfenech.materialiconview.MaterialIconView

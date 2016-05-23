@@ -1,6 +1,9 @@
 package com.adrienfenech.Sample;
 
 import android.animation.ValueAnimator;
+import android.graphics.Point;
+import android.view.MotionEvent;
+import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 
@@ -372,5 +375,31 @@ public class AnimationHelper {
                                 launchAndroidAnimation(mainView);
                         }
                     });
+    }
+
+    public static void launchTouchAnimation(final MaterialIconView mainView) {
+        mainView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                    mainView.animateMaterial()
+                            .setDuration(800)
+                            .fromPoint(new Point((int)event.getX(), (int)event.getY()))
+                            .setTransition(TypeOfTransition.Circle)
+                            .setInterpolator(new AccelerateDecelerateInterpolator())
+                            .toColor(getRandomMaterialColor(), getRandomMaterialColor())
+
+                            .withConcurrentAnimation()
+                            .setStartDelay(10 + rnd.nextInt(80))
+                            .setDuration(800)
+                            .fromPoint(new Point((int)event.getX(), (int)event.getY()))
+                            .setTransition(TypeOfTransition.Circle)
+                            .setInterpolator(new AccelerateDecelerateInterpolator())
+                            .toColor(MaterialColor.White);
+                    return true;
+                }
+                return false;
+            }
+        });
     }
 }
