@@ -12,7 +12,7 @@ Everything is in http://www.thinking-line.com/2016/05/12/Release-Android-Materia
 License
 -------
 
-    Copyright 2015 Wasabeef
+    Copyright 2015 Adrien Fenech
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
